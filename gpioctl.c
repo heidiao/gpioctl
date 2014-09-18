@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#define DEBUG 1
  
 int main(int argc, char *argv[])
 {
@@ -13,16 +12,18 @@ int main(int argc, char *argv[])
 
     printf("GPIO test running...\n");
 
-    if( argc !=4 ){
-        printf("Usage: ./goipctl GPIO_NUMBER IN/OUT HIGH/LOW\n");
-        printf("Example:  ./gpioctl 152 in/out 1  <-- set gpio pin 152 high\n");
-        printf("          ./gpioctl 152 in/out 0  <-- set gpio pin 152 low\n");
+    if( argc < 2 || argc > 4 ){
+        printf("Usage: ./goipctl GPIO_NUMBER [IN/OUT] [HIGH/LOW]\n");
+        printf("Example:  ./gpioctl 152 out 1  <-- set gpio pin 152 output high\n");
+        printf("          ./gpioctl 152 in     <-- set gpio pin 152 input\n");
         exit(1);
     }
     
     num = argv[1];
-    direct = argv[2];
-    value = argv[3];
+    if ( argc >= 3 )
+        direct = argv[2];
+    if ( argc == 4 )
+        value = argv[3];
 
     sprintf(directionpath,"/sys/class/gpio/gpio%s/direction",num);
     sprintf(valuepath,"/sys/class/gpio/gpio%s/value",num);
@@ -42,28 +43,32 @@ int main(int argc, char *argv[])
     printf("GPIO exported successfully\n");
  
     // Update the direction of the GPIO to be an output
-    directionfd = open(directionpath, O_RDWR);
-    if (directionfd < 0)
-    {
-        printf("Cannot open GPIO direction it\n");
-        exit(1);
+    if ( argc >= 3 ){
+        directionfd = open(directionpath, O_RDWR);
+        if (directionfd < 0)
+        {
+            printf("Cannot open GPIO direction it\n");
+            exit(1);
+        }
+        write(directionfd, direct, strlen(direct));
+        printf("GPIO direction is [%s]\n", direct);
+        close(directionfd);
     }
- 
-    write(directionfd, direct, strlen(direct));
-    close(directionfd);
-    printf("GPIO direction set as output successfully\n");
  
     // Get the GPIO value ready to be toggled
-    valuefd = open(valuepath, O_RDWR);
-    if (valuefd < 0)
-    {
-        printf("Cannot open GPIO value\n");
-        exit(1);
+    if ( argc == 4 ){
+        valuefd = open(valuepath, O_RDWR);
+        if (valuefd < 0)
+        {
+            printf("Cannot open GPIO value\n");
+            exit(1);
+        }
+        write(valuefd, value, strlen(value));
+        printf("GPIO value is [%s]\n", value);
+        close(valuefd);
     }
-    printf("GPIO value opened, now toggling...\n");
-    write(valuefd, value, strlen(value));
  
-
+/*
     exportfd = open("/sys/class/gpio/unexport", O_WRONLY);
     if (exportfd < 0)
     {
@@ -74,5 +79,6 @@ int main(int argc, char *argv[])
     write(exportfd, num, strlen(num));
     close(exportfd);
     printf("GPIO exported successfully\n");
+*/
     exit(0);
 }
