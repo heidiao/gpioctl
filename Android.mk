@@ -10,3 +10,4 @@ LOCAL_CPPFLAGS += -DANDROID
 include $(BUILD_EXECUTABLE)
 
 ## test
+## test 2
